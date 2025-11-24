@@ -21,10 +21,17 @@ bool LazarevaAMaxValMatrixMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  return (rank != 0) ||
-         ((GetInput().size() >= 2) && GetOutput().empty() && (GetInput()[0] > 0) && (GetInput()[1] > 0) &&
-          (GetInput()[0] <= std::numeric_limits<int>::max() / GetInput()[1]) &&
-          (GetInput().size() == (2 + (static_cast<size_t>(GetInput()[0]) * static_cast<size_t>(GetInput()[1])))));
+  int is_valid = 0;
+
+  if (rank == 0) {
+    is_valid = (GetInput().size() >= 2) && GetOutput().empty() && (GetInput()[0] > 0) && (GetInput()[1] > 0) &&
+               (GetInput()[0] <= std::numeric_limits<int>::max() / GetInput()[1]) &&
+               (GetInput().size() == (2 + (static_cast<size_t>(GetInput()[0]) * static_cast<size_t>(GetInput()[1]))));
+  }
+
+  MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  return static_cast<bool>(is_valid);
 }
 
 bool LazarevaAMaxValMatrixMPI::PreProcessingImpl() {
