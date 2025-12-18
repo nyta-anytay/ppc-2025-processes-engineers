@@ -50,21 +50,14 @@ bool LazarevaATorusGridMPI::PreProcessingImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
 
   rows_ = static_cast<int>(std::sqrt(static_cast<double>(world_size_)));
-  while (rows_ > 0 && world_size_ % rows_ != 0) {
+  while (world_size_ % rows_ != 0) {
     rows_--;
-  }
-  if (rows_ == 0) {
-    rows_ = 1;
   }
   cols_ = world_size_ / rows_;
 
   return true;
 }
 
-void LazarevaATorusGridMPI::RankToCoords(int rank, int &row, int &col) const {
-  row = rank / cols_;
-  col = rank % cols_;
-}
 
 int LazarevaATorusGridMPI::CoordsToRank(int row, int col) const {
   row = ((row % rows_) + rows_) % rows_;
@@ -73,10 +66,6 @@ int LazarevaATorusGridMPI::CoordsToRank(int row, int col) const {
 }
 
 int LazarevaATorusGridMPI::ShortestDirection(int from, int to, int size) {
-  if (from == to) {
-    return 0;
-  }
-
   int forward = ((to - from) + size) % size;
   int backward = ((from - to) + size) % size;
 
@@ -88,12 +77,11 @@ int LazarevaATorusGridMPI::ComputeNextNode(int current, int dest) const {
     return -1;
   }
 
-  int curr_row = 0;
-  int curr_col = 0;
-  int dest_row = 0;
-  int dest_col = 0;
-  RankToCoords(current, curr_row, curr_col);
-  RankToCoords(dest, dest_row, dest_col);
+  int curr_row = current / cols_;
+  int curr_col = current % cols_;
+  int dest_row = dest / cols_;
+  int dest_col = dest % cols_;
+
 
   if (curr_col != dest_col) {
     int dir = ShortestDirection(curr_col, dest_col, cols_);

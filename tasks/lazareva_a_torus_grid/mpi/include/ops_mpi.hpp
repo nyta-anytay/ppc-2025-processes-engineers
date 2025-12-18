@@ -21,7 +21,7 @@ class LazarevaATorusGridMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void RankToCoords(int rank, int &row, int &col) const;
+  
   [[nodiscard]] int CoordsToRank(int row, int col) const;
   [[nodiscard]] static int ShortestDirection(int from, int to, int size);
   [[nodiscard]] int ComputeNextNode(int current, int dest) const;

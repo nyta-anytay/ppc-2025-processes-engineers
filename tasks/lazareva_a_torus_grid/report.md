@@ -133,7 +133,7 @@ int ComputeNextNode(int current, int dest) {
 
 **MPI-операции:**
 - MPI_Bcast — рассылка source и dest всем процессам для вычисления пути
-- MMPI_Send / MPI_Recv — point-to-point передача данных по маршруту
+- MPI_Send / MPI_Recv — point-to-point передача данных по маршруту
 
 ## 5. Детали реализации
 
