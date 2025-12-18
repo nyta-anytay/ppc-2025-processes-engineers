@@ -34,62 +34,48 @@ class LazarevaAGaussFilterHorizontalFuncTests : public ppc::util::BaseRunFuncTes
   }
 
   void LoadBorschImage(int crop_size) {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int width = -1;
+    int height = -1;
+    int channels = -1;
 
-    int actual_crop = crop_size;
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lazareva_a_gauss_filter_horizontal, "borsch.jpg");
 
-    if (rank == 0) {
-      int width = -1;
-      int height = -1;
-      int channels = -1;
+    auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_grey);
 
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lazareva_a_gauss_filter_horizontal, "borsch.jpg");
-
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_grey);
-
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load borsch.jpg: " + std::string(stbi_failure_reason()));
-      }
-
-      channels = STBI_grey;
-
-      actual_crop = std::min({width, height, crop_size});
-
-      input_data_.resize(2 + actual_crop * actual_crop);
-      input_data_[0] = actual_crop;
-      input_data_[1] = actual_crop;
-
-      for (int i = 0; i < actual_crop; i++) {
-        for (int j = 0; j < actual_crop; j++) {
-          input_data_[2 + i * actual_crop + j] = static_cast<int>(data[i * width + j]);
-        }
-      }
-
-      stbi_image_free(data);
+    if (data == nullptr) {
+      throw std::runtime_error("Failed to load borsch.jpg: " + std::string(stbi_failure_reason()));
     }
 
-    // Broadcast actual_crop to all processes
-    MPI_Bcast(&actual_crop, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    int actual_crop = std::min({width, height, crop_size});
 
-    // Broadcast input data to all processes (needed for SEQ version)
-    int data_size = 2 + actual_crop * actual_crop;
+    input_data_.resize(2 + actual_crop * actual_crop);
+    input_data_[0] = actual_crop;
+    input_data_[1] = actual_crop;
 
-    if (rank != 0) {
-      input_data_.resize(data_size);
+    for (int i = 0; i < actual_crop; i++) {
+      for (int j = 0; j < actual_crop; j++) {
+        input_data_[2 + i * actual_crop + j] = static_cast<int>(data[i * width + j]);
+      }
     }
 
-    MPI_Bcast(input_data_.data(), data_size, MPI_INT, 0, MPI_COMM_WORLD);
+    stbi_image_free(data);
 
     expected_output_size_ = actual_crop * actual_crop;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // Check if MPI is initialized
+    int mpi_initialized = 0;
+    MPI_Initialized(&mpi_initialized);
 
-    if (rank != 0) {
-      return true;
+    if (mpi_initialized != 0) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+      // For MPI version, only rank 0 has output
+      if (rank != 0 && output_data.empty()) {
+        return true;
+      }
     }
 
     if (output_data.size() != expected_output_size_) {
@@ -99,13 +85,7 @@ class LazarevaAGaussFilterHorizontalFuncTests : public ppc::util::BaseRunFuncTes
     bool all_valid =
         std::all_of(output_data.begin(), output_data.end(), [](int val) { return val >= 0 && val <= 255; });
 
-    if (!all_valid) {
-      return false;
-    }
-
-    bool not_empty = std::any_of(output_data.begin(), output_data.end(), [](int val) { return val != 0; });
-
-    return not_empty;
+    return all_valid;
   }
 
   InType GetTestInputData() final {

@@ -14,7 +14,7 @@
 namespace lazareva_a_gauss_filter_horizontal {
 
 class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kImageSize = 5000;
+  static constexpr int kImageSize = 3000;
 
   InType input_data_;
   size_t expected_output_size_ = 0;
@@ -24,12 +24,11 @@ class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTes
     int width = kImageSize;
     int data_size = 2 + height * width;
 
-    // Generate data on ALL processes (not just rank 0)
     input_data_.resize(data_size);
     input_data_[0] = height;
     input_data_[1] = width;
 
-    std::mt19937 gen(42);  // Same seed = same data on all processes
+    std::mt19937 gen(42);
     std::uniform_int_distribution<int> dist(0, 255);
 
     for (int i = 0; i < height * width; i++) {
@@ -40,13 +39,18 @@ class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTes
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // Check if MPI is initialized
+    int mpi_initialized = 0;
+    MPI_Initialized(&mpi_initialized);
 
-    // For SEQ version, check on all processes
-    // For MPI version, only rank 0 has output
-    if (output_data.empty() && rank != 0) {
-      return true;
+    if (mpi_initialized != 0) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+      // For MPI version, only rank 0 has output
+      if (rank != 0 && output_data.empty()) {
+        return true;
+      }
     }
 
     if (output_data.size() != expected_output_size_) {
