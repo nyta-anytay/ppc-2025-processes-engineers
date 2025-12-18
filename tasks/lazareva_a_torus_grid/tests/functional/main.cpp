@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <cmath> 
 
 #include "lazareva_a_torus_grid/common/include/common.hpp"
 #include "lazareva_a_torus_grid/mpi/include/ops_mpi.hpp"
