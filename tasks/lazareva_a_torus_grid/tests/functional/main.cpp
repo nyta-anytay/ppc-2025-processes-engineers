@@ -159,7 +159,7 @@ TEST_P(LazarevaATorusGridFuncTest, TorusGridDataTransfer) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {
+const std::array<TestType, 10> kTestParam = {
     std::make_tuple(1, "single_element"),     std::make_tuple(3, "small_data"),
     std::make_tuple(5, "medium_data"),        std::make_tuple(7, "odd_data"),
     std::make_tuple(10, "ten_elements"),      std::make_tuple(50, "fifty_elements"),
