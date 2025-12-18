@@ -59,11 +59,9 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Calculate row distribution
   int rows_per_proc = height_ / size;
   int remainder = height_ % size;
 
-  // Calculate local parameters for each process
   std::vector<int> rows_count(size);
   std::vector<int> rows_offset(size);
 
@@ -77,12 +75,10 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
   int local_rows = rows_count[rank];
   int local_start_row = rows_offset[rank];
 
-  // Calculate extended region (with halo rows for filtering)
   int halo_top = (local_start_row > 0) ? 1 : 0;
   int halo_bottom = (local_start_row + local_rows < height_) ? 1 : 0;
   int extended_rows = local_rows + halo_top + halo_bottom;
 
-  // Prepare sendcounts and displacements for extended regions
   std::vector<int> sendcounts(size);
   std::vector<int> displs(size);
 
@@ -96,17 +92,15 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
     displs[i] = (start - htop) * width_;
   }
 
-  // Scatter extended data to all processes
   std::vector<int> local_data(extended_rows * width_);
 
   MPI_Scatterv(rank == 0 ? GetInput().data() + 2 : nullptr, sendcounts.data(), displs.data(), MPI_INT,
                local_data.data(), extended_rows * width_, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Apply Gaussian filter
   std::vector<int> local_result(local_rows * width_);
 
   for (int i = 0; i < local_rows; i++) {
-    int ext_i = i + halo_top;  // Position in extended buffer
+    int ext_i = i + halo_top;
 
     for (int j = 0; j < width_; j++) {
       int sum = 0;
@@ -116,7 +110,6 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
           int row = ext_i + ki;
           int col = j + kj;
 
-          // Clamp row within extended buffer
           if (row < 0) {
             row = 0;
           }
@@ -124,7 +117,6 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
             row = extended_rows - 1;
           }
 
-          // Clamp column
           if (col < 0) {
             col = 0;
           }
@@ -141,7 +133,6 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
     }
   }
 
-  // Prepare gather parameters (only actual rows, not halos)
   std::vector<int> recvcounts(size);
   std::vector<int> recvdispls(size);
 
@@ -152,7 +143,6 @@ bool LazarevaAGaussFilterHorizontalMPI::RunImpl() {
     offset += recvcounts[i];
   }
 
-  // Gather results
   MPI_Gatherv(local_result.data(), local_rows * width_, MPI_INT, rank == 0 ? GetOutput().data() : nullptr,
               recvcounts.data(), recvdispls.data(), MPI_INT, 0, MPI_COMM_WORLD);
 

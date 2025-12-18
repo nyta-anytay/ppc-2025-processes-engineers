@@ -26,7 +26,6 @@ bool LazarevaAGaussFilterHorizontalSEQ::PreProcessingImpl() {
   height_ = GetInput()[0];
   width_ = GetInput()[1];
 
-  // Prepare output buffer
   GetOutput().clear();
   GetOutput().resize(height_ * width_);
 
@@ -37,21 +36,17 @@ bool LazarevaAGaussFilterHorizontalSEQ::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
 
-  // Extract image data (skip first 2 elements: height and width)
   std::vector<int> image(input.begin() + 2, input.end());
 
-  // Apply Gaussian filter to each pixel
   for (int i = 0; i < height_; i++) {
     for (int j = 0; j < width_; j++) {
       int sum = 0;
 
-      // Convolve with 3x3 kernel
       for (int ki = -1; ki <= 1; ki++) {
         for (int kj = -1; kj <= 1; kj++) {
           int row = i + ki;
           int col = j + kj;
 
-          // Handle boundaries by clamping (replicate edge pixels)
           if (row < 0) {
             row = 0;
           }
@@ -72,7 +67,6 @@ bool LazarevaAGaussFilterHorizontalSEQ::RunImpl() {
         }
       }
 
-      // Normalize by kernel sum and store result
       output[i * width_ + j] = sum / kernel_sum_;
     }
   }

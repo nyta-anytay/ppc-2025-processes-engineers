@@ -64,7 +64,6 @@ class LazarevaAGaussFilterHorizontalFuncTests : public ppc::util::BaseRunFuncTes
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Check if MPI is initialized
     int mpi_initialized = 0;
     MPI_Initialized(&mpi_initialized);
 
@@ -72,7 +71,6 @@ class LazarevaAGaussFilterHorizontalFuncTests : public ppc::util::BaseRunFuncTes
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-      // For MPI version, only rank 0 has output
       if (rank != 0 && output_data.empty()) {
         return true;
       }
