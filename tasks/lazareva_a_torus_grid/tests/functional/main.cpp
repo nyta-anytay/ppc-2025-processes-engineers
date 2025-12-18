@@ -44,21 +44,18 @@ class LazarevaATorusGridFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
     if (is_seq_test_) {
       dest_ = source_;
     } else if (test_name == "vertical_path" || test_name == "large_vertical") {
-    
-    int rows = static_cast<int>(std::sqrt(static_cast<double>(world_size_)));
-    while (world_size_ % rows != 0) {
-      rows--;
+      int rows = static_cast<int>(std::sqrt(static_cast<double>(world_size_)));
+      while (world_size_ % rows != 0) {
+        rows--;
+      }
+      int cols = world_size_ / rows;
+
+      dest_ = (cols < world_size_) ? cols : 0;
+    } else if (test_name == "diagonal_path") {
+      dest_ = (world_size_ > 1) ? (world_size_ - 1) : 0;
+    } else {
+      dest_ = (world_size_ > 1) ? std::min(data_size % world_size_, world_size_ - 1) : 0;
     }
-    int cols = world_size_ / rows;
-    
-    dest_ = (cols < world_size_) ? cols : 0;
-  } else if (test_name == "diagonal_path") {
-    
-    dest_ = (world_size_ > 1) ? (world_size_ - 1) : 0;
-  } else {
-    
-    dest_ = (world_size_ > 1) ? std::min(data_size % world_size_, world_size_ - 1) : 0;
-  }
 
     input_data_.clear();
     input_data_.push_back(source_);
@@ -163,9 +160,11 @@ TEST_P(LazarevaATorusGridFuncTest, TorusGridDataTransfer) {
 }
 
 const std::array<TestType, 7> kTestParam = {
-    std::make_tuple(1, "single_element"),    std::make_tuple(3, "small_data"),    std::make_tuple(5, "medium_data"),
-    std::make_tuple(7, "odd_data"),          std::make_tuple(10, "ten_elements"), std::make_tuple(50, "fifty_elements"),
-    std::make_tuple(100, "hundred_elements"), std::make_tuple(4, "vertical_path"), std::make_tuple(8, "diagonal_path"), std::make_tuple(16, "large_vertical") };
+    std::make_tuple(1, "single_element"),     std::make_tuple(3, "small_data"),
+    std::make_tuple(5, "medium_data"),        std::make_tuple(7, "odd_data"),
+    std::make_tuple(10, "ten_elements"),      std::make_tuple(50, "fifty_elements"),
+    std::make_tuple(100, "hundred_elements"), std::make_tuple(4, "vertical_path"),
+    std::make_tuple(8, "diagonal_path"),      std::make_tuple(16, "large_vertical")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LazarevaATorusGridMPI, InType>(kTestParam, PPC_SETTINGS_lazareva_a_torus_grid),

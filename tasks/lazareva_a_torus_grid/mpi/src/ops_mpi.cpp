@@ -58,7 +58,6 @@ bool LazarevaATorusGridMPI::PreProcessingImpl() {
   return true;
 }
 
-
 int LazarevaATorusGridMPI::CoordsToRank(int row, int col) const {
   row = ((row % rows_) + rows_) % rows_;
   col = ((col % cols_) + cols_) % cols_;
@@ -81,7 +80,6 @@ int LazarevaATorusGridMPI::ComputeNextNode(int current, int dest) const {
   int curr_col = current % cols_;
   int dest_row = dest / cols_;
   int dest_col = dest % cols_;
-
 
   if (curr_col != dest_col) {
     int dir = ShortestDirection(curr_col, dest_col, cols_);
