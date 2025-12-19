@@ -1,11 +1,19 @@
 #include "lazareva_a_gauss_filter_horizontal/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <limits>
 
 #include "lazareva_a_gauss_filter_horizontal/common/include/common.hpp"
 
 namespace lazareva_a_gauss_filter_horizontal {
+
+namespace {
+int GetKernelValue(int ki, int kj) {
+  constexpr std::array<std::array<int, 3>, 3> kKernelLocal = {{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}};
+  return kKernelLocal.at(ki).at(kj);
+}
+}  // namespace
 
 LazarevaAGaussFilterHorizontalSEQ::LazarevaAGaussFilterHorizontalSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -43,9 +51,7 @@ bool LazarevaAGaussFilterHorizontalSEQ::RunImpl() {
           int col = std::clamp(j + kj - 1, 0, width_ - 1);
 
           int pixel_value = input[2 + (row * width_) + col];
-          int kernel_value = kKernel[ki][kj];
-
-          sum += pixel_value * kernel_value;
+          sum += pixel_value * GetKernelValue(ki, kj);
         }
       }
 
