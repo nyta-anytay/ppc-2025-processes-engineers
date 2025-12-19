@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
-#include <vector>
 
 #include "lazareva_a_gauss_filter_horizontal/common/include/common.hpp"
 #include "lazareva_a_gauss_filter_horizontal/mpi/include/ops_mpi.hpp"
@@ -14,7 +13,7 @@
 namespace lazareva_a_gauss_filter_horizontal {
 
 class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kImageSize = 3000;
+  static constexpr int kImageSize = 5000;
 
   InType input_data_;
   size_t expected_output_size_ = 0;
@@ -22,24 +21,24 @@ class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTes
   void SetUp() override {
     int height = kImageSize;
     int width = kImageSize;
-    int data_size = 2 + height * width;
+    int data_size = 2 + (height * width);
 
     input_data_.resize(data_size);
     input_data_[0] = height;
     input_data_[1] = width;
 
-    std::mt19937 gen(42);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(0, 255);
 
     for (int i = 0; i < height * width; i++) {
       input_data_[2 + i] = dist(gen);
     }
 
-    expected_output_size_ = static_cast<size_t>(height * width);
+    expected_output_size_ = static_cast<size_t>(height) * static_cast<size_t>(width);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Check if MPI is initialized
     int mpi_initialized = 0;
     MPI_Initialized(&mpi_initialized);
 
@@ -47,7 +46,6 @@ class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTes
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-      // For MPI version, only rank 0 has output
       if (rank != 0 && output_data.empty()) {
         return true;
       }
@@ -57,8 +55,7 @@ class LazarevaAGaussFilterHorizontalPerfTests : public ppc::util::BaseRunPerfTes
       return false;
     }
 
-    bool all_valid =
-        std::all_of(output_data.begin(), output_data.end(), [](int val) { return val >= 0 && val <= 255; });
+    bool all_valid = std::ranges::all_of(output_data, [](int val) { return val >= 0 && val <= 255; });
 
     return all_valid;
   }

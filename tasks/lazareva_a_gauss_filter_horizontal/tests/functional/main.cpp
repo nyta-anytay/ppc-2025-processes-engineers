@@ -5,11 +5,9 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "lazareva_a_gauss_filter_horizontal/common/include/common.hpp"
 #include "lazareva_a_gauss_filter_horizontal/mpi/include/ops_mpi.hpp"
@@ -48,19 +46,19 @@ class LazarevaAGaussFilterHorizontalFuncTests : public ppc::util::BaseRunFuncTes
 
     int actual_crop = std::min({width, height, crop_size});
 
-    input_data_.resize(2 + actual_crop * actual_crop);
+    input_data_.resize(2 + (static_cast<size_t>(actual_crop) * static_cast<size_t>(actual_crop)));
     input_data_[0] = actual_crop;
     input_data_[1] = actual_crop;
 
     for (int i = 0; i < actual_crop; i++) {
       for (int j = 0; j < actual_crop; j++) {
-        input_data_[2 + i * actual_crop + j] = static_cast<int>(data[i * width + j]);
+        input_data_[2 + (i * actual_crop) + j] = static_cast<int>(data[(i * width) + j]);
       }
     }
 
     stbi_image_free(data);
 
-    expected_output_size_ = actual_crop * actual_crop;
+    expected_output_size_ = static_cast<size_t>(actual_crop) * static_cast<size_t>(actual_crop);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -80,8 +78,7 @@ class LazarevaAGaussFilterHorizontalFuncTests : public ppc::util::BaseRunFuncTes
       return false;
     }
 
-    bool all_valid =
-        std::all_of(output_data.begin(), output_data.end(), [](int val) { return val >= 0 && val <= 255; });
+    bool all_valid = std::ranges::all_of(output_data, [](int val) { return val >= 0 && val <= 255; });
 
     return all_valid;
   }

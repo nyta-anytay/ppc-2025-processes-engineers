@@ -1,12 +1,9 @@
 #include "lazareva_a_gauss_filter_horizontal/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <vector>
 
 #include "lazareva_a_gauss_filter_horizontal/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace lazareva_a_gauss_filter_horizontal {
 
@@ -27,7 +24,7 @@ bool LazarevaAGaussFilterHorizontalSEQ::PreProcessingImpl() {
   width_ = GetInput()[1];
 
   GetOutput().clear();
-  GetOutput().resize(height_ * width_);
+  GetOutput().resize(static_cast<size_t>(height_) * static_cast<size_t>(width_));
 
   return true;
 }
@@ -36,38 +33,23 @@ bool LazarevaAGaussFilterHorizontalSEQ::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
 
-  std::vector<int> image(input.begin() + 2, input.end());
-
   for (int i = 0; i < height_; i++) {
     for (int j = 0; j < width_; j++) {
       int sum = 0;
 
-      for (int ki = -1; ki <= 1; ki++) {
-        for (int kj = -1; kj <= 1; kj++) {
-          int row = i + ki;
-          int col = j + kj;
+      for (int ki = 0; ki < 3; ki++) {
+        for (int kj = 0; kj < 3; kj++) {
+          int row = std::clamp(i + ki - 1, 0, height_ - 1);
+          int col = std::clamp(j + kj - 1, 0, width_ - 1);
 
-          if (row < 0) {
-            row = 0;
-          }
-          if (row >= height_) {
-            row = height_ - 1;
-          }
-          if (col < 0) {
-            col = 0;
-          }
-          if (col >= width_) {
-            col = width_ - 1;
-          }
-
-          int pixel_value = image[row * width_ + col];
-          int kernel_value = kernel_[ki + 1][kj + 1];
+          int pixel_value = input[2 + (row * width_) + col];
+          int kernel_value = kKernel[ki][kj];
 
           sum += pixel_value * kernel_value;
         }
       }
 
-      output[i * width_ + j] = sum / kernel_sum_;
+      output[(i * width_) + j] = sum / kKernelSum;
     }
   }
 
@@ -75,7 +57,7 @@ bool LazarevaAGaussFilterHorizontalSEQ::RunImpl() {
 }
 
 bool LazarevaAGaussFilterHorizontalSEQ::PostProcessingImpl() {
-  return !GetOutput().empty() && (GetOutput().size() == static_cast<size_t>(height_ * width_));
+  return !GetOutput().empty() && (GetOutput().size() == (static_cast<size_t>(height_) * static_cast<size_t>(width_)));
 }
 
 }  // namespace lazareva_a_gauss_filter_horizontal
