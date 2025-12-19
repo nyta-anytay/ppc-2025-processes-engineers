@@ -1,6 +1,7 @@
 #include "lazareva_a_gauss_filter_horizontal/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <limits>
 
